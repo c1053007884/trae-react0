@@ -1,0 +1,54 @@
+// 城市点数据
+export const pointsData = {
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "北京市",
+        "population": 21540000,
+        "category": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [116.3974, 39.9093]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "上海市",
+        "population": 24280000,
+        "category": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.4737, 31.2304]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "广州市",
+        "population": 15300000,
+        "category": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [113.2644, 23.1291]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "深圳市",
+        "population": 13030000,
+        "category": "city"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [114.0579, 22.5431]
+      }
+    }
+  ]
+};
