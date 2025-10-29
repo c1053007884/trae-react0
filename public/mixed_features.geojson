@@ -1,0 +1,130 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "北京首都国际机场",
+        "type": "airport",
+        "icao_code": "ZBAA",
+        "passengers_per_year": 100000000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [116.6047, 40.0799]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "上海浦东国际机场",
+        "type": "airport",
+        "icao_code": "ZSPD",
+        "passengers_per_year": 70000000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.8070, 31.1440]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "京广铁路",
+        "length_km": 2324,
+        "built_year": 1957,
+        "status": "运营中"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [116.3974, 39.9093],
+          [114.3055, 38.0429],
+          [113.6230, 34.7466],
+          [113.2644, 30.5928],
+          [113.2644, 23.1291]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "三峡库区",
+        "area_km2": 1084,
+        "type": "水库",
+        "capacity_cubic_km": 39.3
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [110.7, 31.0],
+            [110.9, 31.0],
+            [110.9, 30.8],
+            [110.7, 30.8],
+            [110.7, 31.0]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "京津冀都市圈",
+        "area_km2": 218000,
+        "population": 112000000,
+        "description": "中国重要的经济区"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [116.0, 40.0],
+              [117.0, 40.0],
+              [117.0, 39.5],
+              [116.0, 39.5],
+              [116.0, 40.0]
+            ]
+          ],
+          [
+            [
+              [117.5, 39.0],
+              [118.5, 39.0],
+              [118.5, 38.5],
+              [117.5, 38.5],
+              [117.5, 39.0]
+            ]
+          ],
+          [
+            [
+              [114.5, 38.5],
+              [115.5, 38.5],
+              [115.5, 38.0],
+              [114.5, 38.0],
+              [114.5, 38.5]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "主要城市分布",
+        "description": "中国东部沿海主要城市"
+      },
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [
+          [116.3974, 39.9093],
+          [121.4737, 31.2304],
+          [113.2644, 23.1291],
+          [114.0579, 22.5431],
+          [120.1551, 30.2741],
+          [118.7969, 32.0603]
+        ]
+      }
+    }
+  ]
+}
