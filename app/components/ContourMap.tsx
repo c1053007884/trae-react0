@@ -22,7 +22,7 @@ export const ContourMap: React.FC = () => {
 
     // 创建投影
     const projection = d3.geoMercator()
-      .fitSize([chartWidth, chartHeight], xcData);
+      .fitSize([chartWidth, chartHeight], xcData as unknown as GeoJSON.FeatureCollection<GeoJSON.Geometry>);
     const path = d3.geoPath().projection(projection);
 
     // 生成颜色渐变用于模拟地形
@@ -34,7 +34,7 @@ export const ContourMap: React.FC = () => {
       .data(xcData.features)
       .enter().append('path')
       .attr('class', 'boundary')
-      .attr('d', path)
+      .attr('d', (d) => path(d as unknown as GeoJSON.Feature<GeoJSON.Geometry>))
       .attr('fill', () => colorScale(Math.random() * 0.7 + 0.3))
       .attr('stroke', '#333')
       .attr('stroke-width', 1.5);
@@ -67,14 +67,14 @@ export const ContourMap: React.FC = () => {
     const contours = generateRandomContours(5);
 
     // 绘制模拟等高线
-    const contourPath = d3.line()
+    const contourPath = d3.line<[number, number]>()
       .curve(d3.curveCardinalClosed);
     
     g.selectAll('.contour')
       .data(contours)
       .enter().append('path')
       .attr('class', 'contour')
-      .attr('d', contourPath)
+      .attr('d', (d) => contourPath(d as [number, number][]))
       .attr('fill', 'none')
       .attr('stroke', '#666')
       .attr('stroke-width', 1)
