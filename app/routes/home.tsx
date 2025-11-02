@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { SimpleGeoMap } from '../components/SimpleGeoMap';
+import { ContourMap } from '../components/ContourMap';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,7 +11,7 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   return (
     <div className="container mx-auto p-4">
-      <SimpleGeoMap />
+      <ContourMap />
     </div>
   );
 }
