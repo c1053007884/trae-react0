@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import dcData from '../geoJson/dc.json';
+import xcData from '../geoJson/xc.json';
 
-export const SimpleGeoMap: React.FC = () => {
+export const ContourMap: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -22,25 +22,16 @@ export const SimpleGeoMap: React.FC = () => {
 
     // 创建投影
     const projection = d3.geoMercator()
-      .fitSize([chartWidth, chartHeight], dcData as unknown as GeoJSON.FeatureCollection<GeoJSON.Geometry>);
+      .fitSize([chartWidth, chartHeight], xcData as unknown as GeoJSON.FeatureCollection<GeoJSON.Geometry>);
     const path = d3.geoPath().projection(projection);
-    
-    // 添加缩放功能
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-      });
-    
-    svg.call(zoom);
 
-    // 生成颜色渐变用于模拟地形 - 使用更美观的配色方案
-    const colorScale = d3.scaleSequential(d3.interpolateTurbo)
+    // 生成颜色渐变用于模拟地形
+    const colorScale = d3.scaleSequential(d3.interpolateViridis)
       .domain([0, 1]);
 
     // 绘制区域边界并填充模拟地形颜色
     g.selectAll('.boundary')
-      .data(dcData.features)
+      .data(xcData.features)
       .enter().append('path')
       .attr('class', 'boundary')
       .attr('d', (d) => path(d as unknown as GeoJSON.Feature<GeoJSON.Geometry>))
@@ -96,7 +87,7 @@ export const SimpleGeoMap: React.FC = () => {
       .attr('text-anchor', 'middle')
       .style('font-size', '16px')
       .style('font-weight', 'bold')
-      .text('北京市东城区地图可视化');
+      .text('北京市西城区地图可视化');
 
     // 添加图例
     const legend = svg.append('g')
