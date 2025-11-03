@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>Three.js Terrain Recreate</title>
+  <style>
+    html,body{height:100%;margin:0;background:#000}
+    #canvas-container{width:100%;height:100%;overflow:hidden}
+    .info{position:fixed;left:12px;top:12px;color:#eee;font-family:Arial,Helvetica,sans-serif;background:rgba(0,0,0,0.25);padding:8px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div class="info">terrain_recreate — procedural terrain, quantized colors, stripes & points</div>
+
+  <!-- Use the local minified three.js from template folder included in repo -->
+  <script src="public/three.min.js"></script>
+
+  <script>
+  // Lightweight demo to approximate the provided image using Three.js
+  (function(){
+    const container = document.getElementById('canvas-container');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
+
+    const camera = new THREE.PerspectiveCamera(45, width/height, 0.1, 2000);
+    camera.position.set(120, 90, 160);
+    camera.lookAt(0,0,0);
+
+    const renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(width, height);
+    container.appendChild(renderer.domElement);
+
+    // Resize
+    window.addEventListener('resize', ()=>{
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+      renderer.setSize(w,h);
+      camera.aspect = w/h;
+      camera.updateProjectionMatrix();
+    });
+
+    // Lights
+    const ambient = new THREE.AmbientLight(0x507080, 0.7);
+    scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+    dir.position.set(100,150,100);
+    scene.add(dir);
+
+    // Simple orbit-like control (mouse drag to rotate)
+    let isDown=false, lastX=0, lastY=0;
+    let rotY = -0.3, rotX = 0.25;
+    renderer.domElement.addEventListener('pointerdown', e=>{isDown=true; lastX=e.clientX; lastY=e.clientY});
+    window.addEventListener('pointerup', ()=>isDown=false);
+    window.addEventListener('pointermove', e=>{ if(!isDown) return; const dx=(e.clientX-lastX)/200; const dy=(e.clientY-lastY)/200; rotY+=dx; rotX+=dy; lastX=e.clientX; lastY=e.clientY; });
+
+    // Procedural height function (fbm using trig) — deterministic
+    function noise2(x,y){
+      return (Math.sin(x*1.7 + Math.cos(y*1.3)*0.8)+ Math.cos(y*1.9 + Math.sin(x*1.1)*0.7))*0.5;
+    }
+    function fbm(x,y){
+      let v=0, a=0.5, f=1.0;
+      for(let i=0;i<5;i++){ v += a*noise2(x*f,y*f); a*=0.5; f*=2.0; }
+      return v;
+    }
+
+    // Create terrain geometry
+    const SEG = 200; // grid density
+    const SIZE = 200;
+    const geometry = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
+    geometry.rotateX(-Math.PI/2);
+
+    // Displace vertices and compute colors
+    const positions = geometry.attributes.position;
+    const colors = new Float32Array(positions.count * 3);
+
+    // Color palette similar to image: deep-blue -> cyan -> greenish -> yellow
+    function colormap(t){
+      // t in [0,1]
+      // quantize to create blocky patches
+      const q = Math.floor(t*12)/12; // 12 levels
+      const v = q;
+      if(v < 0.25) return [0.02, 0.08 + v*1.5, 0.45 + v*0.2]; // deep blue
+      if(v < 0.5) return [0.02, 0.3 + v*0.9, 0.6 + (v-0.25)*0.7];
+      if(v < 0.8) return [0.05 + (v-0.5)*1.2, 0.9 - (v-0.5)*0.6, 0.35 + (v-0.5)*0.4];
+      return [0.7, 0.9, 0.3];
+    }
+
+    // Fill positions
+    for(let i=0;i<positions.count;i++){
+      const ix = positions.getX(i);
+      const iz = positions.getZ(i);
+      // normalize coords to [0,1]
+      const nx = (ix/SIZE) + 0.5;
+      const nz = (iz/SIZE) + 0.5;
+      // sample fbm
+      const h = fbm(nx*8, nz*8) * 28.0; // scale height
+      positions.setY(i, h);
+      const t = (h + 20)/60; // map height to 0..1
+      const rgb = colormap(Math.max(0, Math.min(1, t)));
+      colors[i*3+0] = rgb[0];
+      colors[i*3+1] = rgb[1];
+      colors[i*3+2] = rgb[2];
+    }
+
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    // Mesh with vertex colors and flat shading for blocky look
+    const mat = new THREE.MeshStandardMaterial({vertexColors:true, flatShading:true, roughness:0.9, metalness:0.0});
+    const terrain = new THREE.Mesh(geometry, mat);
+    terrain.receiveShadow = true;
+    scene.add(terrain);
+
+    // Add small scattered point markers (blue dots)
+    const pointGeom = new THREE.BoxGeometry(0.9,0.9,0.9);
+    const pointMat = new THREE.MeshStandardMaterial({color:0x072f8a, emissive:0x091f6a});
+    const points = new THREE.InstancedMesh(pointGeom, pointMat, 300);
+    let idx=0;
+    const dummy = new THREE.Object3D();
+    for(let i=0;i<300;i++){
+      const x = (Math.random()-0.5)*SIZE*0.95;
+      const z = (Math.random()-0.5)*SIZE*0.95;
+      // find y by sampling height from nearest vertex (approx)
+      const nx = (x/SIZE)+0.5;
+      const nz = (z/SIZE)+0.5;
+      const h = fbm(nx*8, nz*8)*28.0 + (Math.random()-0.5)*1.5;
+      dummy.position.set(x, h + 1.2, z);
+      dummy.updateMatrix();
+      points.setMatrixAt(idx++, dummy.matrix);
+    }
+    scene.add(points);
+
+    // Add layered stripes to mimic the stacked slices on the slopes
+    const stripesGroup = new THREE.Group();
+    for(let s=0;s<14;s++){
+      const level = -6 + s*3.6; // y level
+      // create a long thin ribbon that follows terrain silhouette approx by sampling along x
+      const lineGeom = new THREE.BufferGeometry();
+      const sampleCount = 400;
+      const verts = new Float32Array(sampleCount*3);
+      for(let i=0;i<sampleCount;i++){
+        const px = -SIZE/2 + (i/(sampleCount-1))*SIZE;
+        const pz = -SIZE/2 + Math.sin(i*0.12 + s*0.6)*6; // slight waviness
+        const nx = (px/SIZE) + 0.5;
+        const nz = (pz/SIZE) + 0.5;
+        const hy = fbm(nx*8, nz*8)*28.0;
+        // push vertex slightly inside terrain to create banding effect
+        verts[i*3+0] = px;
+        verts[i*3+1] = hy - Math.abs(hy - level) < 1.4 ? hy - 0.05 : level - 2.5; // near level follow
+        verts[i*3+2] = pz;
+      }
+      lineGeom.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+      const lineMat = new THREE.LineBasicMaterial({color:0x79e3ff, linewidth:1, opacity:0.95, transparent:true});
+      const line = new THREE.Line(lineGeom, lineMat);
+      stripesGroup.add(line);
+    }
+    stripesGroup.position.y = 0;
+    scene.add(stripesGroup);
+
+    // subtle rim shading cube in corner to mimic watermark area
+    const cornerGeo = new THREE.BoxGeometry(18, 18, 18);
+    const cornerMat = new THREE.MeshBasicMaterial({color:0x1a9b2f, wireframe:false, opacity:0.0, transparent:true});
+    const corner = new THREE.Mesh(cornerGeo, cornerMat);
+    corner.position.set(SIZE/2 - 12, 6, SIZE/2 - 12);
+    scene.add(corner);
+
+    // Animation
+    let t0 = performance.now();
+    function animate(){
+      requestAnimationFrame(animate);
+      const t = (performance.now()-t0)/1000;
+      // gentle auto-rotate
+      rotY += 0.0015;
+      camera.position.x = Math.cos(rotY)*160;
+      camera.position.z = Math.sin(rotY)*160;
+      camera.position.y = 90 + Math.sin(t*0.4)*6;
+      camera.lookAt(0,20,0);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+  })();
+  </script>
+</body>
+</html>
