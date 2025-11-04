@@ -146,7 +146,7 @@ export const Geo3DMap: React.FC<Geo3DMapProps> = ({ width = 800, height = 600 })
         const points2D = allPoints.map(point => [point.x, point.z]);
         
         // 使用D3的Delaunay三角化
-        const delaunay = d3.Delaunay.from(points2D);
+        const delaunay = d3.Delaunay.from(points2D as [number, number][]);
         const triangles = delaunay.triangles;
 
         // 创建顶点
@@ -168,8 +168,7 @@ export const Geo3DMap: React.FC<Geo3DMapProps> = ({ width = 800, height = 600 })
           terrainIndices.push(triangles[i]);
         }
 
-        // 创建地形网格
-        const terrainGeometry = new THREE.BufferGeometry();
+        // 设置地形网格属性
         terrainGeometry.setAttribute('position', new THREE.Float32BufferAttribute(terrainPositions, 3));
         terrainGeometry.setAttribute('color', new THREE.Float32BufferAttribute(terrainColors, 3));
         terrainGeometry.setIndex(terrainIndices);
@@ -187,12 +186,13 @@ export const Geo3DMap: React.FC<Geo3DMapProps> = ({ width = 800, height = 600 })
       } catch (error) {
         console.error('Error creating terrain:', error);
       }
+    } else {
+      // 如果没有点数据，设置默认属性
+      terrainGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      terrainGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      terrainGeometry.setIndex(indices);
+      terrainGeometry.computeVertexNormals();
     }
-
-    terrainGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    terrainGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    terrainGeometry.setIndex(indices);
-    terrainGeometry.computeVertexNormals();
 
     const terrainMaterial = new THREE.MeshStandardMaterial({ 
       vertexColors: true,
@@ -235,24 +235,26 @@ export const Geo3DMap: React.FC<Geo3DMapProps> = ({ width = 800, height = 600 })
 
     // 添加体积层 - 使用多个平面表示不同高度的地质层
     const volumeLayers = 10;
-    const minZ = Math.min(...contourData.map(c => c.z));
-    const maxZ = Math.max(...contourData.map(c => c.z));
-    const layerHeight = (maxZ - minZ) / volumeLayers;
+    if (contourData.length > 0) {
+      const minZ = Math.min(...contourData.map(c => c.z));
+      const maxZ = Math.max(...contourData.map(c => c.z));
+      const layerHeight = (maxZ - minZ) / volumeLayers;
 
-    for (let i = 0; i < volumeLayers; i++) {
-      const z = minZ + i * layerHeight;
-      const layerGeometry = new THREE.PlaneGeometry(100, 100, 10, 10);
-      const layerMaterial = new THREE.MeshStandardMaterial({ 
-        color: new THREE.Color().setHSL(0.1 + i * 0.08, 0.8, 0.5),
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide
-      });
+      for (let i = 0; i < volumeLayers; i++) {
+        const z = minZ + i * layerHeight;
+        const layerGeometry = new THREE.PlaneGeometry(100, 100, 10, 10);
+        const layerMaterial = new THREE.MeshStandardMaterial({ 
+          color: new THREE.Color().setHSL(0.1 + i * 0.08, 0.8, 0.5),
+          transparent: true,
+          opacity: 0.2,
+          side: THREE.DoubleSide
+        });
 
-      const layer = new THREE.Mesh(layerGeometry, layerMaterial);
-      layer.position.y = z * 0.1;
-      layer.rotation.x = Math.PI / 2;
-      scene.add(layer);
+        const layer = new THREE.Mesh(layerGeometry, layerMaterial);
+        layer.position.y = z * 0.1;
+        layer.rotation.x = Math.PI / 2;
+        scene.add(layer);
+      }
     }
 
     // 添加网格辅助线
@@ -283,7 +285,7 @@ export const Geo3DMap: React.FC<Geo3DMapProps> = ({ width = 800, height = 600 })
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    containerRef.current.addEventListener('mousemove', (event: MouseEvent) => {
+    containerRef.current?.addEventListener('mousemove', (event: MouseEvent) => {
       mouse.x = (event.clientX / width) * 2 - 1;
       mouse.y = -(event.clientY / height) * 2 + 1;
 
@@ -299,7 +301,7 @@ export const Geo3DMap: React.FC<Geo3DMapProps> = ({ width = 800, height = 600 })
       }
     });
 
-    containerRef.current.addEventListener('click', (event: MouseEvent) => {
+    containerRef.current?.addEventListener('click', (event: MouseEvent) => {
       mouse.x = (event.clientX / width) * 2 - 1;
       mouse.y = -(event.clientY / height) * 2 + 1;
 
