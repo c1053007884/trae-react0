@@ -22,7 +22,7 @@ export const SimpleGeoMap: React.FC = () => {
 
     // 创建投影
     const projection = d3.geoMercator()
-      .fitSize([chartWidth, chartHeight], dcData);
+      .fitSize([chartWidth, chartHeight], dcData as any);
     const path = d3.geoPath().projection(projection);
 
     // 生成颜色渐变用于模拟地形
@@ -34,20 +34,20 @@ export const SimpleGeoMap: React.FC = () => {
       .data(dcData.features)
       .enter().append('path')
       .attr('class', 'boundary')
-      .attr('d', path)
+      .attr('d', d => path(d as any)!)
       .attr('fill', () => colorScale(Math.random() * 0.7 + 0.3))
       .attr('stroke', '#333')
       .attr('stroke-width', 1.5);
 
-    // 模拟等高线 - 使用随机生成的多边形
-    const generateRandomContours = (numContours: number) => {
-      const contours = [];
+    // 生成随机等高线数据
+    const generateRandomContours = (numContours: number = 5) => {
+      const contours: [number, number][][] = [];
+      const numPoints = 50;
+      const centerX = chartWidth / 2;
+      const centerY = chartHeight / 2;
+      
       for (let i = 0; i < numContours; i++) {
-        // 生成随机点
-        const points = [];
-        const numPoints = 8 + Math.floor(Math.random() * 12);
-        const centerX = chartWidth / 2;
-        const centerY = chartHeight / 2;
+        const points: [number, number][] = [];
         const radius = (chartWidth / 4) * (1 - i / numContours * 0.8);
         
         for (let j = 0; j < numPoints; j++) {
@@ -73,7 +73,7 @@ export const SimpleGeoMap: React.FC = () => {
       .data(contours)
       .enter().append('path')
       .attr('class', 'contour')
-      .attr('d', contourPath)
+      .attr('d', d => contourPath(d)!)
       .attr('fill', 'none')
       .attr('stroke', '#666')
       .attr('stroke-width', 1)
